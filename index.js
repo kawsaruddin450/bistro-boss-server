@@ -34,65 +34,78 @@ async function run() {
         const usersCollection = client.db("bistroDB").collection("users");
         const reviewCollection = client.db("bistroDB").collection("reviews");
         const cartCollection = client.db("bistroDB").collection("carts");
-        
+
         // get all menu from db
-        app.get('/menu', async(req, res)=> {
+        app.get('/menu', async (req, res) => {
             const result = await menuCollection.find().toArray();
             res.send(result);
-        })
+        });
 
         //get all users
-        app.get('/users', async(req, res) => {
+        app.get('/users', async (req, res) => {
             const result = await usersCollection.find().toArray();
             res.send(result);
-        })
+        });
 
         //Post api for a user
-        app.post('/users', async(req, res)=> {
+        app.post('/users', async (req, res) => {
             const user = req.body;
-            const query = {email: user.email};
+            const query = { email: user.email };
             const existingUser = await usersCollection.findOne(query);
-            if(existingUser){
-                return res.send({message: "User already exists!"})
+            if (existingUser) {
+                return res.send({ message: "User already exists!" })
             }
             const result = await usersCollection.insertOne(user);
             res.send(result);
-        })
+        });
+
+        //make admin api
+        app.patch('/users/admin/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updateRole = {
+                $set: {
+                    role: `admin`
+                },
+            };
+            const result = await usersCollection.updateOne(filter, updateRole);
+            res.send(result);
+        });
 
         // get all reviews from db
-        app.get('/reviews', async(req, res)=> {
+        app.get('/reviews', async (req, res) => {
             const result = await reviewCollection.find().toArray();
             res.send(result);
-        })
+        });
 
         //get cart data of specific user
-        app.get('/carts', async(req, res) => {
+        app.get('/carts', async (req, res) => {
             const email = req.query.email;
             let query = {}
-            if(!email){
+            if (!email) {
                 res.send([]);
             }
-            else if(email){
-                query = {email: email};
+            else if (email) {
+                query = { email: email };
             }
             const result = await cartCollection.find(query).toArray();
             res.send(result);
-        })
+        });
 
         // post cart data
-        app.post('/carts', async(req, res)=> {
+        app.post('/carts', async (req, res) => {
             const item = req.body;
             const result = await cartCollection.insertOne(item);
             res.send(result);
-        })
+        });
 
         //delete an item from cart
-        app.delete('/carts/:id', async(req, res) => {
+        app.delete('/carts/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const result = await cartCollection.deleteOne(query);
             res.send(result);
-        })
+        });
 
 
         // Send a ping to confirm a successful connection
@@ -107,4 +120,4 @@ run().catch(console.dir);
 
 app.listen(port, () => {
     console.log("Bistro Boss Server is running at:", port);
-})
+});
