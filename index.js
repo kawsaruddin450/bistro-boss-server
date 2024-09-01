@@ -83,6 +83,19 @@ async function run() {
             res.send(result);
         });
 
+        //check if admin or not
+        app.get('/users/admin/:email', verifyJWT, async(req, res)=> {
+            const email = req.params.email;
+            
+            if(req.decoded.email !== email){
+                return res.status(403).send({error: true, message: "Forbidden Access"});
+            }
+            const query = {email : email};
+            const user = await usersCollection.findOne(query);
+            const result = {admin : user?.role === 'admin'};
+            res.send(result);
+        })
+
         //make admin api
         app.patch('/users/admin/:id', async (req, res) => {
             const id = req.params.id;
