@@ -58,6 +58,13 @@ async function run() {
             res.send(result);
         });
 
+        //add a menu item
+        app.post('/menu', async(req, res)=> {
+            const menuItem = req.body;
+            const result = await menuCollection.insertOne(menuItem);
+            res.send(result);
+        })
+
         //jwt
         app.post('/jwt', (req, res) => {
             const user = req.body;
