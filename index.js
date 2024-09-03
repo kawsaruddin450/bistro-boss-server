@@ -25,6 +25,8 @@ const verifyJWT = (req, res, next) => {
     })
 }
 
+
+
 app.get('/', (req, res) => {
     res.send(`Bistro Boss Server is running at: ${port}`)
 })
@@ -52,6 +54,17 @@ async function run() {
         const reviewCollection = client.db("bistroDB").collection("reviews");
         const cartCollection = client.db("bistroDB").collection("carts");
 
+
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email };
+            const result = await usersCollection.findOne(query);
+            if (result?.role !== "admin") {
+                return res.status(403).send({ error: true, message: "forbidden access" });
+            }
+            next();
+        }
+
         // get all menu from db
         app.get('/menu', async (req, res) => {
             const result = await menuCollection.find().toArray();
@@ -59,7 +72,8 @@ async function run() {
         });
 
         //add a menu item
-        app.post('/menu', async(req, res)=> {
+        app.post('/menu', verifyJWT, verifyAdmin, async (req, res) => {
+            console.log(req.headers.authorization);
             const menuItem = req.body;
             const result = await menuCollection.insertOne(menuItem);
             res.send(result);
@@ -91,15 +105,15 @@ async function run() {
         });
 
         //check if admin or not
-        app.get('/users/admin/:email', verifyJWT, async(req, res)=> {
+        app.get('/users/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
-            
-            if(req.decoded.email !== email){
-                return res.status(403).send({error: true, message: "Forbidden Access"});
+
+            if (req.decoded.email !== email) {
+                return res.status(403).send({ error: true, message: "Forbidden Access" });
             }
-            const query = {email : email};
+            const query = { email: email };
             const user = await usersCollection.findOne(query);
-            const result = {admin : user?.role === 'admin'};
+            const result = { admin: user?.role === 'admin' };
             res.send(result);
         })
 
@@ -129,10 +143,10 @@ async function run() {
             if (!email) {
                 res.send([]);
             }
-            
+
             const decodedEmail = req.decoded.email;
-            if(decodedEmail !== email){
-                return res.status(403).send({error: true, message: "forbidden access"});
+            if (decodedEmail !== email) {
+                return res.status(403).send({ error: true, message: "forbidden access" });
             }
 
             else if (email) {
