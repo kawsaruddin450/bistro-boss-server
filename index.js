@@ -195,11 +195,15 @@ async function run() {
             })
         })
 
-        //save payment data to database
+        //save payment data to database and delete cart items paid
         app.post('/payments', verifyJWT, async (req, res) => {
             const payment = req.body;
-            const result = await paymentCollection.insertOne(payment);
-            res.send(result);
+            const insertedResult = await paymentCollection.insertOne(payment);
+
+            const query = {_id: { $in: payment.items.map(id => new ObjectId(id))}};
+            const deletedResult = await cartCollection.deleteMany(query);
+
+            res.send({insertedResult, deletedResult});
         })
 
 
